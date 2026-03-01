@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { getSessionEmployee } from '@/lib/employees';
+import EmployeesTab from './EmployeesTab';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,7 +25,7 @@ interface InventoryRow {
   product_name?: string;
 }
 
-type AdminTab = 'products' | 'inventory' | 'export';
+type AdminTab = 'products' | 'inventory' | 'export' | 'employees';
 
 interface Props {
   onLogout: () => void;
@@ -35,6 +37,8 @@ const DAY_LABELS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
 export default function AdminDashboard({ onLogout }: Props) {
   const [tab, setTab] = useState<AdminTab>('products');
+  const emp = getSessionEmployee();
+  const employeeName = emp?.name ?? '';
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -44,28 +48,31 @@ export default function AdminDashboard({ onLogout }: Props) {
           <span className="text-2xl">🔐</span>
           <div>
             <h1 className="text-base font-black leading-tight">Administration</h1>
-            <p className="text-purple-300 text-xs">Inventaire #02641</p>
+            <p className="text-purple-300 text-xs">
+              {employeeName ? `👤 ${employeeName}` : 'Inventaire #02641'}
+            </p>
           </div>
         </div>
         <button
           onPointerDown={e => { e.preventDefault(); onLogout(); }}
           className="text-purple-300 hover:text-white text-sm border border-purple-500 rounded-lg px-3 py-2 transition-colors"
         >
-          Quitter
+          Déconnexion
         </button>
       </header>
 
-      {/* Tab bar */}
-      <div className="flex border-b border-gray-200 bg-white sticky top-[72px] z-40">
+      {/* Tab bar — scrollable on small screens */}
+      <div className="flex border-b border-gray-200 bg-white sticky top-[72px] z-40 overflow-x-auto">
         {([
-          { id: 'products', label: '📦 Produits', icon: '' },
-          { id: 'inventory', label: '📋 Inventaire', icon: '' },
-          { id: 'export', label: '📥 Export', icon: '' },
-        ] as { id: AdminTab; label: string; icon: string }[]).map(t => (
+          { id: 'products',  label: '📦 Produits' },
+          { id: 'inventory', label: '📋 Inventaire' },
+          { id: 'export',    label: '📥 Export' },
+          { id: 'employees', label: '👥 Employés' },
+        ] as { id: AdminTab; label: string }[]).map(t => (
           <button
             key={t.id}
             onPointerDown={e => { e.preventDefault(); setTab(t.id); }}
-            className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${
+            className={`flex-shrink-0 flex-1 py-3 text-sm font-bold transition-colors border-b-2 px-3 whitespace-nowrap ${
               tab === t.id
                 ? 'border-purple-600 text-purple-700 bg-purple-50'
                 : 'border-transparent text-gray-500 hover:text-gray-700'
@@ -81,6 +88,7 @@ export default function AdminDashboard({ onLogout }: Props) {
         {tab === 'products'   && <ProductsTab />}
         {tab === 'inventory'  && <InventoryTab />}
         {tab === 'export'     && <ExportTab />}
+        {tab === 'employees'  && <EmployeesTab />}
       </main>
     </div>
   );

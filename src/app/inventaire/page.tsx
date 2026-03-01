@@ -12,6 +12,7 @@ import {
   saveInventory,
   setCell,
 } from '@/lib/storage';
+import { getSessionEmployee, clearSession, logAction } from '@/lib/employees';
 
 import WeekNav from '@/components/WeekNav';
 import BottomNav, { Tab } from '@/components/BottomNav';
@@ -32,18 +33,24 @@ const CIG_SECTIONS = [{ title: 'Tabac / Cigarettes', priceKey: 0, products: CIGA
 export default function InventairePage() {
   const router = useRouter();
 
-  const [tab,     setTab]     = useState<Tab>('loterie');
-  const [week,    setWeek]    = useState('');
-  const [inv,     setInv]     = useState<InventoryData>({});
-  const [saved,   setSaved]   = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [tab,          setTab]          = useState<Tab>('loterie');
+  const [week,         setWeek]         = useState('');
+  const [inv,          setInv]          = useState<InventoryData>({});
+  const [saved,        setSaved]        = useState(false);
+  const [loading,      setLoading]      = useState(true);
+  const [employeeName, setEmployeeName] = useState('');
+  const [employeeId,   setEmployeeId]   = useState<string | null>(null);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Auth guard ──────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (typeof window !== 'undefined' && sessionStorage.getItem('auth') !== '1') {
+    const emp = getSessionEmployee();
+    if (!emp) {
       router.replace('/');
+    } else {
+      setEmployeeName(emp.name);
+      setEmployeeId(emp.id);
     }
   }, [router]);
 
@@ -68,11 +75,14 @@ export default function InventairePage() {
   const persist = useCallback((data: InventoryData, w: string) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(async () => {
-      await saveInventory(w, data);
+      await saveInventory(w, data, employeeId ?? undefined);
+      if (employeeId) {
+        await logAction(employeeId, 'inventory_save', { week: w });
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     }, 600);
-  }, []);
+  }, [employeeId]);
 
   function handleChange(productId: number, dayIdx: number, val: number) {
     const next = setCell(inv, productId, dayIdx, val);
@@ -93,7 +103,7 @@ export default function InventairePage() {
   }
 
   function logout() {
-    sessionStorage.clear();
+    clearSession();
     router.push('/');
   }
 
@@ -107,6 +117,7 @@ export default function InventairePage() {
           week={week}
           saved={saved}
           loading={loading}
+          employeeName={employeeName}
           onPrev={() => changeWeek(prevWeek(week))}
           onNext={() => changeWeek(nextWeek(week))}
           onLogout={logout}
@@ -120,14 +131,16 @@ export default function InventairePage() {
             <span className="text-2xl">🎰</span>
             <div>
               <h1 className="text-base font-black leading-tight">Inventaire Loterie</h1>
-              <p className="text-blue-300 text-xs">Voisin Shell / IGA #02641</p>
+              <p className="text-blue-300 text-xs">
+                {employeeName ? `👤 ${employeeName}` : 'Voisin Shell / IGA #02641'}
+              </p>
             </div>
           </div>
           <button
             onPointerDown={e => { e.preventDefault(); logout(); }}
             className="text-blue-300 hover:text-white text-sm border border-blue-500 rounded-lg px-3 py-2"
           >
-            Quitter
+            Déconnexion
           </button>
         </header>
       )}
@@ -174,11 +187,6 @@ export default function InventairePage() {
 
       {/* Bottom nav */}
       <BottomNav active={tab} onChange={setTab} />
-
-      {/* Offline footer */}
-      <div className="hidden fixed bottom-14 left-0 right-0 bg-amber-50 border-t border-amber-200 py-1 text-center text-xs text-amber-600">
-        Mode hors-ligne — données locales
-      </div>
     </div>
   );
 }

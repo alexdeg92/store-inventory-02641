@@ -3,18 +3,20 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminDashboard from '@/components/AdminDashboard';
+import { getSessionEmployee, clearSession } from '@/lib/employees';
 
 export default function AdminPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && sessionStorage.getItem('admin-auth') !== '1') {
+    const emp = getSessionEmployee();
+    if (!emp || emp.role !== 'admin') {
       router.replace('/');
     }
   }, [router]);
 
   function logout() {
-    sessionStorage.clear();
+    clearSession();
     router.push('/');
   }
 

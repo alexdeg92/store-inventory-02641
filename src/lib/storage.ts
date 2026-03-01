@@ -123,7 +123,7 @@ export async function loadInventory(weekStart: string): Promise<InventoryData> {
   }
 }
 
-export async function saveInventory(weekStart: string, data: InventoryData): Promise<void> {
+export async function saveInventory(weekStart: string, data: InventoryData, updatedBy?: string): Promise<void> {
   localSave(weekStart, data);
   if (productUUIDMap.size === 0) return;
 
@@ -134,19 +134,29 @@ export async function saveInventory(weekStart: string, data: InventoryData): Pro
       day_of_week: number;
       count: number;
       updated_at: string;
+      updated_by?: string;
     }[] = [];
 
     for (const [pidStr, days] of Object.entries(data)) {
       const uuid = productUUIDMap.get(parseInt(pidStr, 10));
       if (!uuid) continue;
       for (const [dayStr, count] of Object.entries(days)) {
-        rows.push({
+        const row: {
+          product_id: string;
+          week_start_date: string;
+          day_of_week: number;
+          count: number;
+          updated_at: string;
+          updated_by?: string;
+        } = {
           product_id: uuid,
           week_start_date: weekStart,
           day_of_week: parseInt(dayStr, 10),
           count: count as number,
           updated_at: new Date().toISOString(),
-        });
+        };
+        if (updatedBy) row.updated_by = updatedBy;
+        rows.push(row);
       }
     }
 
