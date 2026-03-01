@@ -1,26 +1,82 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* iOS Safari scrolling fix */
+html, body {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Remove number input arrows */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Touch feedback */
+button {
+  -webkit-tap-highlight-color: rgba(0,0,0,0.1);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom scrollbar for the grid */
+.grid-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* PIN input style */
+.pin-input {
+  letter-spacing: 0.5em;
+  font-size: 2rem;
+  text-align: center;
+}
+
+/* Sticky header row */
+.sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: white;
+}
+
+/* Sticky first column */
+.sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  background: white;
+}
+
+/* Grid cell focus */
+.inventory-input:focus {
+  outline: none;
+  background-color: #fffbeb;
+  border-color: #f59e0b !important;
+}
+
+/* Price category header */
+.price-header {
+  background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+}
+
+/* Save indicator */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.save-indicator {
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Zebra striping */
+.product-row:nth-child(even) .sticky-col,
+.product-row:nth-child(even) td {
+  background-color: #f8fafc;
+}
+.product-row:nth-child(even) .sticky-col {
+  background-color: #f8fafc;
 }
