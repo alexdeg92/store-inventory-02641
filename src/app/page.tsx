@@ -58,7 +58,7 @@ export default function LoginPage() {
       return;
     }
     const next = [...digits, key];
-    if (next.length > 8) return;
+    if (next.length > 7) return;
     setDigits(next);
   }
 
@@ -96,7 +96,7 @@ export default function LoginPage() {
           className={`flex justify-center gap-2 mb-4 transition-all`}
           style={{ animation: shake ? 'shake 0.5s' : undefined }}
         >
-          {Array.from({ length: Math.max(4, digits.length + 1, 4) }).map((_, i) => (
+          {Array.from({ length: Math.max(4, Math.min(digits.length + 1, 7)) }).map((_, i) => (
             <div
               key={i}
               className={`w-5 h-5 rounded-full border-2 transition-all duration-150 ${
