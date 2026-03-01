@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { listSavedWeeks, loadInventory } from '@/lib/storage';
+import { listSavedWeeks, loadInventory, initProductMap, getWeeklyTotalSold } from '@/lib/storage';
+import { supabase } from '@/lib/supabase';
 import { LOTTERY_PRODUCTS, CIGARETTE_PRODUCTS } from '@/lib/products';
-import { getWeeklyTotalSold, getDailySales } from '@/lib/storage';
 import { weekLabel } from '@/lib/dates';
 
 interface WeekSummary {
@@ -16,27 +16,69 @@ interface WeekSummary {
 export default function HistoriqueTab() {
   const [summaries, setSummaries] = useState<WeekSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     async function load() {
       setLoading(true);
-      const weeks = listSavedWeeks().slice(0, 12); // last 12 weeks
-      const results = await Promise.all(
-        weeks.map(async (w) => {
-          const inv = await loadInventory(w);
-          const lotteryRevenue = LOTTERY_PRODUCTS.reduce(
-            (s, p) => s + getWeeklyTotalSold(inv, p.id) * p.priceCategory, 0
-          );
-          const lotterySold = LOTTERY_PRODUCTS.reduce(
-            (s, p) => s + getWeeklyTotalSold(inv, p.id), 0
-          );
-          const cigSold = CIGARETTE_PRODUCTS.reduce(
-            (s, p) => s + getWeeklyTotalSold(inv, p.id), 0
-          );
-          return { weekStart: w, lotteryRevenue, lotterySold, cigSold };
-        })
-      );
-      setSummaries(results.filter(r => r.lotterySold > 0 || r.cigSold > 0));
+      setError('');
+
+      // Ensure product map is initialized
+      await initProductMap();
+
+      // Get weeks from localStorage
+      const localWeeks = listSavedWeeks();
+
+      // Also query Supabase for distinct weeks with data
+      let supaWeeks: string[] = [];
+      try {
+        const { data, error: qErr } = await supabase
+          .from('inventory_entries')
+          .select('week_start_date')
+          .order('week_start_date', { ascending: false });
+
+        if (!qErr && data) {
+          supaWeeks = [...new Set(
+            (data as { week_start_date: string }[]).map(d => d.week_start_date)
+          )];
+        }
+      } catch {
+        // Offline — fall back to localStorage only
+      }
+
+      // Merge, deduplicate, sort descending, take last 12 weeks
+      const allWeeks = [...new Set([...supaWeeks, ...localWeeks])]
+        .sort()
+        .reverse()
+        .slice(0, 12);
+
+      if (allWeeks.length === 0) {
+        setSummaries([]);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const results = await Promise.all(
+          allWeeks.map(async (w) => {
+            const inv = await loadInventory(w);
+            const lotteryRevenue = LOTTERY_PRODUCTS.reduce(
+              (s, p) => s + getWeeklyTotalSold(inv, p.id) * p.priceCategory, 0
+            );
+            const lotterySold = LOTTERY_PRODUCTS.reduce(
+              (s, p) => s + getWeeklyTotalSold(inv, p.id), 0
+            );
+            const cigSold = CIGARETTE_PRODUCTS.reduce(
+              (s, p) => s + getWeeklyTotalSold(inv, p.id), 0
+            );
+            return { weekStart: w, lotteryRevenue, lotterySold, cigSold };
+          })
+        );
+        setSummaries(results.filter(r => r.lotterySold > 0 || r.cigSold > 0));
+      } catch (e) {
+        setError('Erreur de chargement: ' + (e instanceof Error ? e.message : String(e)));
+      }
+
       setLoading(false);
     }
     load();
@@ -46,6 +88,15 @@ export default function HistoriqueTab() {
     return (
       <div className="flex items-center justify-center py-16 text-gray-400">
         <span className="animate-spin mr-2">⏳</span> Chargement…
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 gap-3 text-red-400 px-4">
+        <span className="text-4xl">⚠️</span>
+        <p className="text-base font-bold text-center">{error}</p>
       </div>
     );
   }
