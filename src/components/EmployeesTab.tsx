@@ -149,7 +149,7 @@ function PinChangeModal({
       }
     }
     if (!newPin) { setError('Entrez le nouveau NIP'); return; }
-    if (newPin.length < 4) { setError('NIP minimum 4 chiffres'); return; }
+    if (newPin.length < 4 || newPin.length > 7) { setError('NIP entre 4 et 7 chiffres'); return; }
     if (!/^\d+$/.test(newPin)) { setError('NIP doit contenir uniquement des chiffres'); return; }
     if (!useGenerated && newPin !== confirmPin) { setError('Les NIPs ne correspondent pas'); return; }
 
@@ -183,7 +183,7 @@ function PinChangeModal({
               value={currentPin}
               onChange={e => setCurrentPin(e.target.value.replace(/\D/g, ''))}
               placeholder="Votre NIP actuel"
-              maxLength={10}
+              maxLength={7}
             />
           </div>
         )}
@@ -205,7 +205,7 @@ function PinChangeModal({
             value={newPin}
             onChange={e => { setNewPin(e.target.value.replace(/\D/g, '')); setUseGenerated(false); }}
             placeholder="ex: 1234"
-            maxLength={10}
+            maxLength={7}
           />
         </div>
 
@@ -219,7 +219,7 @@ function PinChangeModal({
               value={confirmPin}
               onChange={e => setConfirmPin(e.target.value.replace(/\D/g, ''))}
               placeholder="Répéter le NIP"
-              maxLength={10}
+              maxLength={7}
             />
           </div>
         )}
@@ -272,7 +272,7 @@ function AddEmployeeModal({ onClose, onAdded }: { onClose: () => void; onAdded: 
     setError('');
     if (!name.trim()) { setError('Nom requis'); return; }
     if (!pin) { setError('NIP requis'); return; }
-    if (pin.length < 4) { setError('NIP minimum 4 chiffres'); return; }
+    if (pin.length < 4 || pin.length > 7) { setError('NIP entre 4 et 7 chiffres'); return; }
     if (!/^\d+$/.test(pin)) { setError('NIP: chiffres uniquement'); return; }
 
     setSaving(true);
@@ -322,7 +322,7 @@ function AddEmployeeModal({ onClose, onAdded }: { onClose: () => void; onAdded: 
             value={pin}
             onChange={e => { setPin(e.target.value.replace(/\D/g, '')); setGenerated(false); }}
             placeholder="ex: 5678"
-            maxLength={10}
+            maxLength={7}
           />
           {generated && pin && (
             <div className="mt-2 bg-green-50 border border-green-200 rounded-xl p-2 text-center">
