@@ -1,71 +1,47 @@
-/**
- * Get the Monday (start of week) for a given date
- */
+/** Return the Monday (YYYY-MM-DD) of the week containing `date` */
 export function getWeekStart(date: Date = new Date()): string {
   const d = new Date(date);
-  const day = d.getDay(); // 0 = Sunday, 1 = Monday, ...
-  const diff = day === 0 ? -6 : 1 - day; // adjust to Monday
+  const day = d.getDay(); // 0=Sun
+  const diff = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
-  return formatDate(d);
+  return toYMD(d);
 }
 
-/**
- * Format date as YYYY-MM-DD
- */
-export function formatDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+export function toYMD(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/**
- * Parse YYYY-MM-DD to Date object
- */
-export function parseDate(dateStr: string): Date {
-  const [y, m, d] = dateStr.split('-').map(Number);
+export function fromYMD(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
-/**
- * Format week label: "Semaine du 24 fév. 2025"
- */
-export function formatWeekLabel(weekStartDate: string): string {
-  const date = parseDate(weekStartDate);
-  const options: Intl.DateTimeFormatOptions = {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  };
-  return `Semaine du ${date.toLocaleDateString('fr-CA', options)}`;
+export function prevWeek(weekStart: string): string {
+  const d = fromYMD(weekStart);
+  d.setDate(d.getDate() - 7);
+  return toYMD(d);
 }
 
-/**
- * Get array of dates for a week starting from weekStartDate
- */
-export function getWeekDates(weekStartDate: string): string[] {
-  const start = parseDate(weekStartDate);
-  return Array.from({ length: 7 }, (_, i) => {
+export function nextWeek(weekStart: string): string {
+  const d = fromYMD(weekStart);
+  d.setDate(d.getDate() + 7);
+  return toYMD(d);
+}
+
+/** "Semaine du 24 fév. 2025" */
+export function weekLabel(weekStart: string): string {
+  const d = fromYMD(weekStart);
+  return `Semaine du ${d.toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+}
+
+/** Today's day index within the current week (0=Mon … 6=Sun), or -1 if different week */
+export function todayDayIndex(weekStart: string): number {
+  const now = toYMD(new Date());
+  const start = fromYMD(weekStart);
+  for (let i = 0; i < 7; i++) {
     const d = new Date(start);
     d.setDate(d.getDate() + i);
-    return formatDate(d);
-  });
-}
-
-/**
- * Get previous week's start date
- */
-export function getPreviousWeekStart(weekStartDate: string): string {
-  const d = parseDate(weekStartDate);
-  d.setDate(d.getDate() - 7);
-  return formatDate(d);
-}
-
-/**
- * Get next week's start date
- */
-export function getNextWeekStart(weekStartDate: string): string {
-  const d = parseDate(weekStartDate);
-  d.setDate(d.getDate() + 7);
-  return formatDate(d);
+    if (toYMD(d) === now) return i;
+  }
+  return -1;
 }
