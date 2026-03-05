@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import StepperInput from './StepperInput';
 import { Product } from '@/lib/products';
 import {
@@ -139,29 +139,11 @@ function Section({ title, priceKey, products, inv, week, onChange, selectedDay, 
 }
 
 // ─── Day selector (phone) ────────────────────────────────────────────────────
-function DaySelector({ selected, onSelect, week }: { selected: number; onSelect: (d: number) => void; week: string }) {
+export function DaySelector({ selected, onSelect, week }: { selected: number; onSelect: (d: number) => void; week: string }) {
   const todayIdx = week ? todayDayIndex(week) : -1;
-  const [headerHeight, setHeaderHeight] = useState(112);
-
-  useEffect(() => {
-    const update = () => {
-      const el = document.getElementById('week-nav-header');
-      if (el) setHeaderHeight(el.getBoundingClientRect().height);
-    };
-    update();
-    const obs = typeof ResizeObserver !== 'undefined'
-      ? new ResizeObserver(update)
-      : null;
-    const el = document.getElementById('week-nav-header');
-    if (el && obs) obs.observe(el);
-    return () => obs?.disconnect();
-  }, []);
 
   return (
-    <div
-      className="md:hidden sticky z-20 bg-white border-b border-gray-200 px-2 py-2 flex gap-1 overflow-x-auto"
-      style={{ top: headerHeight }}
-    >
+    <div className="md:hidden bg-white border-b border-gray-200 px-2 py-2 flex gap-1 overflow-x-auto">
       {DAYS_SHORT.map((day, i) => (
         <button
           key={day}
@@ -228,15 +210,12 @@ interface ViewProps {
   onChange: (productId: number, day: number, val: number) => void;
   allProducts: Product[];
   showRevenue?: boolean;
+  selectedDay: number;
 }
 
-export default function InventorySection({ sections, inv, week, onChange, allProducts, showRevenue }: ViewProps) {
-  const [selectedDay, setSelectedDay] = useState(() => todayDayIndex(week) >= 0 ? todayDayIndex(week) : 0);
-
+export default function InventorySection({ sections, inv, week, onChange, allProducts, showRevenue, selectedDay }: ViewProps) {
   return (
     <div>
-      <DaySelector selected={selectedDay} onSelect={setSelectedDay} week={week} />
-
       <div className="pb-4">
         {sections.map(sec => (
           <Section

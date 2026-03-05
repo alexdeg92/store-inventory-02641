@@ -16,7 +16,7 @@ import { getSessionEmployee, clearSession, logAction } from '@/lib/employees';
 
 import WeekNav from '@/components/WeekNav';
 import BottomNav, { Tab } from '@/components/BottomNav';
-import InventorySection from '@/components/InventorySection';
+import InventorySection, { DaySelector } from '@/components/InventorySection';
 import ScannerTab from '@/components/ScannerTab';
 import HistoriqueTab from '@/components/HistoriqueTab';
 
@@ -40,6 +40,7 @@ export default function InventairePage() {
   const [loading,      setLoading]      = useState(true);
   const [employeeName, setEmployeeName] = useState('');
   const [employeeId,   setEmployeeId]   = useState<string | null>(null);
+  const [selectedDay,  setSelectedDay]  = useState(() => todayDayIndex(getWeekStart()) >= 0 ? todayDayIndex(getWeekStart()) : 0);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -113,15 +114,18 @@ export default function InventairePage() {
 
       {/* Sticky header — hidden on scanner/historique to save space */}
       {(tab === 'loterie' || tab === 'cigarettes') && (
-        <WeekNav
-          week={week}
-          saved={saved}
-          loading={loading}
-          employeeName={employeeName}
-          onPrev={() => changeWeek(prevWeek(week))}
-          onNext={() => changeWeek(nextWeek(week))}
-          onLogout={logout}
-        />
+        <div className="sticky top-0 z-30">
+          <WeekNav
+            week={week}
+            saved={saved}
+            loading={loading}
+            employeeName={employeeName}
+            onPrev={() => changeWeek(prevWeek(week))}
+            onNext={() => changeWeek(nextWeek(week))}
+            onLogout={logout}
+          />
+          <DaySelector selected={selectedDay} onSelect={setSelectedDay} week={week} />
+        </div>
       )}
 
       {/* Simple header for other tabs */}
@@ -155,6 +159,7 @@ export default function InventairePage() {
             onChange={handleChange}
             allProducts={LOTTERY_PRODUCTS}
             showRevenue
+            selectedDay={selectedDay}
           />
         )}
 
@@ -166,6 +171,7 @@ export default function InventairePage() {
             onChange={handleChange}
             allProducts={CIGARETTE_PRODUCTS}
             showRevenue={false}
+            selectedDay={selectedDay}
           />
         )}
 
