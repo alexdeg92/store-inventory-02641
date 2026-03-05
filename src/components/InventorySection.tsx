@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import StepperInput from './StepperInput';
 import { Product } from '@/lib/products';
 import {
@@ -141,8 +141,27 @@ function Section({ title, priceKey, products, inv, week, onChange, selectedDay, 
 // ─── Day selector (phone) ────────────────────────────────────────────────────
 function DaySelector({ selected, onSelect, week }: { selected: number; onSelect: (d: number) => void; week: string }) {
   const todayIdx = week ? todayDayIndex(week) : -1;
+  const [headerHeight, setHeaderHeight] = useState(112);
+
+  useEffect(() => {
+    const update = () => {
+      const el = document.getElementById('week-nav-header');
+      if (el) setHeaderHeight(el.getBoundingClientRect().height);
+    };
+    update();
+    const obs = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(update)
+      : null;
+    const el = document.getElementById('week-nav-header');
+    if (el && obs) obs.observe(el);
+    return () => obs?.disconnect();
+  }, []);
+
   return (
-    <div className="md:hidden sticky top-[120px] z-20 bg-white border-b border-gray-200 px-2 py-2 flex gap-1 overflow-x-auto">
+    <div
+      className="md:hidden sticky z-20 bg-white border-b border-gray-200 px-2 py-2 flex gap-1 overflow-x-auto"
+      style={{ top: headerHeight }}
+    >
       {DAYS_SHORT.map((day, i) => (
         <button
           key={day}

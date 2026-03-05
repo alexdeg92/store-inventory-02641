@@ -17,7 +17,7 @@ export default function WeekNav({ week, saved, loading, employeeName, onPrev, on
   const isFuture = week > toYMD(new Date());
 
   return (
-    <header className="bg-blue-700 text-white shadow-xl sticky top-0 z-30">
+    <header id="week-nav-header" className="bg-blue-700 text-white shadow-xl sticky top-0 z-30">
       {/* Top bar */}
       <div className="px-3 pt-3 pb-1 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
